@@ -30,6 +30,10 @@
 % main_ordinary_3d_time.m    
 % main_planar_time.m	   
 
+% Scripts to produce the real results:
+% main_box.m        
+% main_sfm.m          
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Acknowledgements

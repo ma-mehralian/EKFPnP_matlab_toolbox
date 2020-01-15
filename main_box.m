@@ -24,11 +24,11 @@ clear; clc;
 IniToolbox;
 
 id = 'b3';
-video = VideoReader(['data\', id ,'.mp4']);
+video = VideoReader(['data/', id ,'.mp4']);
 % vo = VideoWriter('box_results.avi');
 % open(vo);
 
-load(['data\',id,'.mat']);
+load(['data/',id,'.mat']);
 pts_2d = pts_2d(:,1:20:end);
 pts_3d = pts_3d(:,1:20:end);
 
@@ -86,7 +86,7 @@ while hasFrame(video)
     
     %--- MLPnP
     v = normc([x_i; ones(1,size(x_i,2))]);
-    [R_mlpnp,t_mlpnp]=MLPNP_without_COV(X, v, cov);
+    [R_mlpnp,t_mlpnp]=MLPNP_without_COV(X, v, []);
 
     
     %--- EKFPnP
