@@ -23,6 +23,6 @@ set(gca,'xtick',xs);
 title(ti,'FontSize',12,'FontName','Arial');
 xlabel(lx,'FontSize',11);
 ylabel(ly,'FontSize',11);
-legend(p,legendposition);
+legend%(p,legendposition);
 
 return

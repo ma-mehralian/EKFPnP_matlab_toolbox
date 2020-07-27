@@ -1,18 +1,30 @@
 function my_plot()
-close all;
-clear; clc;
+clc;
 IniToolbox;
 
-% ordinary_3d_results();
-% planar_3d_results();
+%--- fig.3
+% main_ordinary_3d;
+% main_planar
+% close all;
+ordinary_3d_results();
+planar_results();
+
+%--- fig.4
+% main_ordinary_3d_sigma;
+% main_planar_sigma
+% close all;
 odinary_3d_results_sigma();
-planar_3d_results_sigma();
-% odinary_3d_results_time();
+planar_results_sigma();
+
+%--- fig.5
+% main_ordinary_3d_time;
+% close all;
+odinary_3d_results_time();
 end
 %%
 function ordinary_3d_results()
 load ordinary3Dresults
-figure('outerposition',[0    260    1920    400])
+figure('outerposition',[0    260    1400    420])
 yrange= [0.1 1.1];
 
 subplot(1,2,1)
@@ -40,9 +52,9 @@ set(hLegend,'Location','northoutside','Orientation','horizontal','position',[0.5
 saveas(gcf, 'sim_experiment_ordinary', 'epsc');
 end
 %%
-function planar_3d_results()
+function planar_results()
 load planar3Dresults
-figure('outerposition',[0    260    1920    400])
+figure('outerposition',[0    260    1400    420])
 yrange= [0.1 2];
 
 subplot(1,2,1)
@@ -73,7 +85,7 @@ end
 %%
 function odinary_3d_results_sigma()
 load ordinary3DresultsSigma
-figure('outerposition',[0    260    1920    400])
+figure('outerposition',[0    260    1400    420])
 yrange= [0 0.8];
 
 subplot(1,2,1)
@@ -100,9 +112,9 @@ set(hLegend,'Location','northoutside','Orientation','horizontal','position',[0.5
 saveas(gcf, 'sim_experiment_ordinary_sigma' ,'epsc')
 end
 %%
-function planar_3d_results_sigma()
+function planar_results_sigma()
 load planar3DresultsSigma
-figure('outerposition',[0    260    1920    400])
+figure('outerposition',[0    260    1400    420])
 yrange= [0 1.3];
 subplot(1,2,1)
 grid on
@@ -132,7 +144,7 @@ end
 %%
 function odinary_3d_results_time()
 load ordinary3DresultsTime
-figure('outerposition',[0    260    850    450])
+figure('outerposition',[0    260    950    450])
 yrange= [0 1100];
 
 grid on

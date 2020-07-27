@@ -32,8 +32,9 @@ if ~exist('vl_sift', 'file')
 end
 
 ekf_err=[]; cepnp_err=[]; mlpnp_err=[];
-for ex=1:50
-    [data, K] = read_data_Temple('templeRing');
+dataset = 'temple'; %'dino'
+for ex=1:100
+    [data, K] = read_data_middlebury(dataset);
     invK = inv(K);
     K_f = K(1,1);
     K_c = K(1:2,3);
@@ -71,7 +72,7 @@ for ex=1:50
     for step=2:s_len
         %--- find common feature with last 3 images which have 3D correspond
         [ids, ia, ib] = intersect(data{step-1}.matches(2,:), data{step}.matches(1,:));
-        fprintf('\nSTEP %g: %g measurments\n', step, length(ia));
+        fprintf('STEP %g: %g measurments\n', step, length(ia));
         
         f0_idx = data{step-1}.matches(1,ia);
         f1_idx = data{step}.matches(1,ib); %%OR%% data{step-1}.matches(2,ia)  %%OR%% ids
@@ -156,7 +157,7 @@ ekf_err = mean(ekf_err,3);
 cepnp_err = mean(cepnp_err,3);
 mlpnp_err = mean(mlpnp_err,3);
 plotErros(ekf_err, cepnp_err, mlpnp_err);
-saveas(gcf, 'real_expriment_sfm.eps', 'epsc')
+saveas(gcf, ['real_expriment_sfm_',dataset,'.eps'], 'epsc')
 
 %--- plot SFM results
 X_ekf = [];  X_cepnp = [];  X_mlpnp = [];
@@ -174,21 +175,21 @@ structure_plot(grt_P, nan(3,1), 'cam_color', 'k', 'cam_fill', 'g');
 structure_plot(ekf_P, X_ekf, 'cam_color', 'r');
 view(-180, -80);
 title('EKFPnP');
-saveas(gcf, 'real_expriment_sfm_EKFPnP.eps','epsc')
+saveas(gcf, ['real_expriment_sfm_',dataset,'_EKFPnP.eps'],'epsc')
 
 % figure; hold on; axis equal;
 % structure_plot(grt_P, nan(3,1), 'cam_color', 'k', 'cam_fill', 'g');
 % structure_plot(cepnp_P, X_cepnp, 'cam_color', 'r');
 % view(-180, -80);
 % title('CEPnP');
-% saveas(gcf, 'real_expriment_sfm_CEPnP.eps')
+% saveas(gcf, ['real_expriment_sfm_',dataset,'_CEPnP.eps'],'epsc')
 
 figure; hold on; axis equal;
 structure_plot(grt_P, nan(3,1), 'cam_color', 'k', 'cam_fill', 'g');
 structure_plot(mlpnp_P, X_mlpnp, 'cam_color', 'r');
 view(-180, -80);
 title('MLPnP');
-saveas(gcf, 'real_expriment_sfm_MLPnP.eps','epsc')
+saveas(gcf, ['real_expriment_sfm_',dataset,'_MLPnP.eps'],'epsc')
 end
 %%
 function name = get_file_name(path)
@@ -208,8 +209,8 @@ data = [];
 for i=1:length(images)
     img = im2single(rgb2gray(imread(images{i})));
     img = imresize(img, SCALE);
-    disp(['Feature extraction (', get_file_name(images{i}), ')']);
     [data{i}.f, data{i}.d] = vl_sift(img);%,'PeakThresh', PEAK_THRESH, 'Levels', LEVELS);
+    disp([num2str(length(data{i}.f)), ' features are extracted from ', get_file_name(images{i})]);
     %{
     figure; imshow(img);
     hold on;
@@ -236,7 +237,7 @@ for i = 1:length(images)-1
      
     %----
     data{i}.matches = intersect(m_1, m_2, 'row')';
-    fprintf('\t2nd KNN reduced features from %d to %d\n', length(data{i}.d), ...
+    fprintf('\t2nd KNN reduces features from %d to %d\n', length(data{i}.d), ...
         length(data{i}.matches));
     
     % --- RANSAC
@@ -244,7 +245,7 @@ for i = 1:length(images)-1
     p_2 = data{j}.f(1:2,data{i}.matches(2,:));
     p_1(3,:) = 1;     p_2(3,:)= 1;
     [~,inliers] = fundamental_projective(p_1, p_2, 'use_ransac'); %FRansac(p_1, p_2);
-    fprintf('\tRANSAC  reduced features from %d to %d\n', ...
+    fprintf('\tRANSAC reduces features from %d to %d\n', ...
         length(data{i}.matches), sum(inliers));
     data{i}.matches = data{i}.matches(:,inliers);
     
@@ -259,9 +260,23 @@ for i = 1:length(images)-1
 end
     
 end
+
 %%
-function [data, K] = read_data_Temple(DATASET)
+function [data, K] = read_data_middlebury(DATASET)
 % dataset from http://vision.middlebury.edu/mview/data/
+if (strcmp(DATASET, "temple"))
+    data_dir = 'data/templeRing/*.png';
+    cam_file = 'data/templeRing/templeR_par.txt';
+    cam_range = 13:31;
+elseif(strcmp(DATASET, "dino"))
+    data_dir = 'data/dino/*.png';
+    cam_file = 'data/dino/dino_par.txt';
+    cam_range = 1:48;
+        
+else
+	disp('Unknown middlebury dataset')
+end
+
 
 KNN_RATION = 0.6;
 
@@ -269,11 +284,11 @@ K =[1520.4  0      302.3
     0       1525.9 246.9
     0       0      1];
 
-images = dir(['data/', DATASET, '/*.png']);
+images = dir(data_dir);
 images = arrayfun(@(f)[f.folder,'/', f.name], images, 'UniformOutput', false);
-cams = importdata(['data/', DATASET, '/templeR_par.txt'], ' ', 1);
+cams = importdata(cam_file, ' ', 1);
 
-idx = 13:31;
+idx = cam_range;
 %images = images(idx);
 cams.data = cams.data(idx,:);
 cams.textdata = cams.textdata(idx+1,:);
@@ -292,7 +307,7 @@ for i=1:length(images)
     data{i}.proj = [R t];
     data{i}.pose = pInv(data{i}.proj);
 end
-save(['data_',DATASET,'_',num2str(KNN_RATION),'.mat'], 'data');
+%save(['data_',DATASET,'_',num2str(KNN_RATION),'.mat'], 'data');
 
 %{
 Ps = cellfun(@(x) x.proj, data, 'UniformOutput', false);
@@ -317,15 +332,15 @@ for i=1:size(grt_x,2)
     %--- rotatin error
     ekf_dq = quatmultiply(quatinv(grt_x(4:7,i)'), ekf_x(4:7,i)');
     [ekf_dq_yaw, ekf_dq_pitch, ekf_dq_roll] = quat2angle(ekf_dq);
-    mr_ekf(i) = norm([ekf_dq_yaw, ekf_dq_pitch, ekf_dq_roll]);
+    mr_ekf(i) = rad2deg(norm([ekf_dq_yaw, ekf_dq_pitch, ekf_dq_roll]));
     
     cepnp_dq = quatmultiply(quatinv(grt_x(4:7,i)'), cepnp_x(4:7,i)');
     [cepnp_dq_yaw, cepnp_dq_pitch, cepnp_dq_roll] = quat2angle(cepnp_dq);
-    mr_cepnp(i) = norm([cepnp_dq_yaw, cepnp_dq_pitch, cepnp_dq_roll]);
+    mr_cepnp(i) = rad2deg(norm([cepnp_dq_yaw, cepnp_dq_pitch, cepnp_dq_roll]));
 
     mlpnp_dq = quatmultiply(quatinv(grt_x(4:7,i)'), mlpnp_x(4:7,i)');
     [mlpnp_dq_yaw, mlpnp_dq_pitch, mlpnp_dq_roll] = quat2angle(mlpnp_dq);
-    mr_mlpnp(i) = norm([mlpnp_dq_yaw, mlpnp_dq_pitch, mlpnp_dq_roll]);
+    mr_mlpnp(i) = rad2deg(norm([mlpnp_dq_yaw, mlpnp_dq_pitch, mlpnp_dq_roll]));
 
 end
 ekf_err=[mt_ekf; mr_ekf];
@@ -339,23 +354,24 @@ subplot(2,1,1);
 hold on;
 grid on;
 plot(ekf_err(1,:), '-r', 'linewidth', 1);
-%plot(cepnp_err(1,:), '-b', 'linewidth', 1);
+plot(cepnp_err(1,:), '-b', 'linewidth', 1);
 plot(mlpnp_err(1,:), '-k', 'linewidth', 1);
 title('Mean Translation Error');
 xlabel('n');
 ylabel('Translation Error (%)');
 legend({'EKFPnP', 'MLPnP'}, 'Location','northwest');
-%legend('EKFPnP', 'CEPnP', 'MLPnP');
+legend('EKFPnP', 'CEPnP', 'MLPnP');
+ylim([0, 100])
 
 subplot(2,1,2);
 hold on;
 grid on;
 plot(ekf_err(2,:), '-r', 'linewidth', 1);
-%plot(cepnp_err(2,:), '-b', 'linewidth', 1);
+plot(cepnp_err(2,:), '-b', 'linewidth', 1);
 plot(mlpnp_err(2,:), '-k', 'linewidth', 1);
 title('Mean Rotation Error');
 xlabel('n');
 ylabel('Rotation Error (degrees)');
 legend({'EKFPnP', 'MLPnP'}, 'Location','northwest');
-%legend('EKFPnP', 'CEPnP', 'MLPnP');
+legend('EKFPnP', 'CEPnP', 'MLPnP');
 end

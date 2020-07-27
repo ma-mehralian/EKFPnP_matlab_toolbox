@@ -33,10 +33,10 @@ cam_num = 200;
 A= zeros(size(npts));
 B= zeros(num,1);
 
-name = {'EKFPnP', 'PPnP','MLPnP','EPnP+GN', 'RPnP', 'ASPnP', 'OPnP', 'DLS', 'CEPPnP'};
-f = {[], @PPnP, @MLPNP_with_COV, @EPnP_GN,  @RPnP, @ASPnP, @OPnP, @robust_dls_pnp, @CEPPnP};
-marker = { 'x', '<', 'd', '*', 's', 'v', 'o', '+', '>'};
-color = { [.8,0,0], [0,.8,0], [0,0,.8], [.6,.4,.2], [.8,0,.8], [0,0,0], [.2,.5,.8], [1,.5,0], [0.8,.5,0.1]};
+name = {'EKFPnP', 'PPnP','MLPnP','EPnP+GN', 'RPnP', 'ASPnP', 'OPnP', 'DLS', 'CEPPnP', 'SRPnP'};
+f = {[], @PPnP, @MLPNP_with_COV, @EPnP_GN,  @RPnP, @ASPnP, @OPnP, @robust_dls_pnp, @CEPPnP, @SRPnP};
+marker = { 'x', '<', 'd', '*', 's', 'v', 'o', '+', '>', '^'};
+color = { [.8,0,0], [0,.8,0], [0,0,.8], [.6,.4,.2], [.8,0,.8], [0,0,0], [.2,.5,.8], [1,.5,0], [0.8,.5,0.1], [0.1,.5,0.1]};
 markerfacecolor = color;
 
 
