@@ -1,5 +1,5 @@
-classdef ekfp
-    %EKFP Extended Kaman Filter for camera pose estimation
+classdef ekfpnp
+    %EKFPnP Extended Kaman Filter for camera pose estimation
     % 
     % .====================== NOTE ======================.
     % |       Large part of this code is based on        |
@@ -18,7 +18,7 @@ classdef ekfp
     end
     
     methods
-        function obj = ekfp(s1, s2, dist, varargin)
+        function obj = ekfpnp(s1, s2, dist, varargin)
             % s1, s2 is the first 2 states of system
             % dist = [f cx, cy]
             % varargin = frames distnce of first 2 states

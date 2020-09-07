@@ -31,8 +31,8 @@ if ~exist('vl_sift', 'file')
     run('vlfeat/toolbox/vl_setup');
 end
 
-ekf_err=[]; cepnp_err=[]; mlpnp_err=[];
-dataset = 'temple'; %'dino'
+ekf_err=[]; ceppnp_err=[]; mlpnp_err=[];
+dataset = 'dino'; %'temple'; %
 for ex=1:100
     [data, K] = read_data_middlebury(dataset);
     invK = inv(K);
@@ -55,15 +55,15 @@ for ex=1:100
     %---- filter initialization
     P1_q = p2state( data{1}.proj );
     P2_q = p2state( data{2}.proj );
-    f = ekfp(P1_q, P2_q, [K(1,1) K(1:2,3)']);
+    f = ekfpnp(P1_q, P2_q, [K(1,1) K(1:2,3)']);
     
     ekf_P = P;
-    cepnp_P = P;
+    ceppnp_P = P;
     mlpnp_P = P;
     grt_P = P;
     
     data{1}.ekf_X = X_f;
-    data{1}.cepnp_X = X_f;
+    data{1}.ceppnp_X = X_f;
     data{1}.mlpnp_X = X_f;
     
     
@@ -103,12 +103,12 @@ for ex=1:100
             Evv(:,:,id) = J*cov_proj*J';
             cov(:,id) = reshape(Evv(:,:,id),9,1);
         end
-        %--- CEPNP
-        X_cepnp = data{step-1}.cepnp_X(1:3, f0_idx);
-        mX = X_cepnp - repmat(mean(X_cepnp,2),1,size(X_cepnp,2));
-        [R_cepnp,t_cepnp]=CEPPnP(mX, x_c, Cu);
-        t_cepnp = t_cepnp - R_cepnp * mean(X_cepnp,2);
-        cepnp_P(:,:,end+1) = [R_cepnp, t_cepnp];
+        %--- CEPPNP
+        X_ceppnp = data{step-1}.ceppnp_X(1:3, f0_idx);
+        mX = X_ceppnp - repmat(mean(X_ceppnp,2),1,size(X_ceppnp,2));
+        [R_ceppnp,t_ceppnp]=CEPPnP(mX, x_c, Cu);
+        t_ceppnp = t_ceppnp - R_ceppnp * mean(X_ceppnp,2);
+        ceppnp_P(:,:,end+1) = [R_ceppnp, t_ceppnp];
         
         %--- MLPnP
         X_mlpnp = data{step-1}.mlpnp_X(1:3, f0_idx);
@@ -135,12 +135,12 @@ for ex=1:100
         data{step}.ekf_X(:, f1_idx) = data{step-1}.ekf_X(1:3, f0_idx);
         data{step}.ekf_X(:, f1_idx_new) = X_ekf_new(1:3,:);
         
-        %--- cepnp triangulation
-        P = cepnp_P(:,:,end-1:end);
-        X_cepnp_new = triangulate(P, cat(3, x1_, x2_));
-        data{step}.cepnp_X = nan(3, length(data{step}.f));
-        data{step}.cepnp_X(:, f1_idx) = data{step-1}.cepnp_X(1:3, f0_idx);
-        data{step}.cepnp_X(:, f1_idx_new) = X_cepnp_new(1:3,:);
+        %--- ceppnp triangulation
+        P = ceppnp_P(:,:,end-1:end);
+        X_ceppnp_new = triangulate(P, cat(3, x1_, x2_));
+        data{step}.ceppnp_X = nan(3, length(data{step}.f));
+        data{step}.ceppnp_X(:, f1_idx) = data{step-1}.ceppnp_X(1:3, f0_idx);
+        data{step}.ceppnp_X(:, f1_idx_new) = X_ceppnp_new(1:3,:);
         
         %--- mlpnp triangulation
         P = mlpnp_P(:,:,end-1:end);
@@ -149,24 +149,24 @@ for ex=1:100
         data{step}.mlpnp_X(:, f1_idx) = data{step-1}.mlpnp_X(1:3, f0_idx);
         data{step}.mlpnp_X(:, f1_idx_new) = X_mlpnp_new(1:3,:);
     end
-    [ekf_err(:,:,ex), cepnp_err(:,:,ex), mlpnp_err(:,:,ex)] = getErrors(p2state(grt_P), p2state(ekf_P), p2state(cepnp_P), p2state(mlpnp_P));
+    [ekf_err(:,:,ex), ceppnp_err(:,:,ex), mlpnp_err(:,:,ex)] = getErrors(p2state(grt_P), p2state(ekf_P), p2state(ceppnp_P), p2state(mlpnp_P));
 end
 
 %--- plot error results
 ekf_err = mean(ekf_err,3);
-cepnp_err = mean(cepnp_err,3);
+ceppnp_err = mean(ceppnp_err,3);
 mlpnp_err = mean(mlpnp_err,3);
-plotErros(ekf_err, cepnp_err, mlpnp_err);
+plotErros(ekf_err, ceppnp_err, mlpnp_err);
 saveas(gcf, ['real_expriment_sfm_',dataset,'.eps'], 'epsc')
 
 %--- plot SFM results
-X_ekf = [];  X_cepnp = [];  X_mlpnp = [];
+X_ekf = [];  X_ceppnp = [];  X_mlpnp = [];
 for i=1:s_len
     ix_ekf = ~isnan(data{i}.ekf_X(1,:));
-    ix_cepnp = ~isnan(data{i}.cepnp_X(1,:));
+    ix_ceppnp = ~isnan(data{i}.ceppnp_X(1,:));
     ix_mlpnp = ~isnan(data{i}.mlpnp_X(1,:));
     X_ekf = [X_ekf data{i}.ekf_X(:,ix_ekf)];
-    X_cepnp = [X_cepnp data{i}.cepnp_X(:,ix_cepnp)];
+    X_ceppnp = [X_ceppnp data{i}.ceppnp_X(:,ix_ceppnp)];
     X_mlpnp = [X_mlpnp data{i}.mlpnp_X(:,ix_mlpnp)];
 end
 
@@ -179,7 +179,7 @@ saveas(gcf, ['real_expriment_sfm_',dataset,'_EKFPnP.eps'],'epsc')
 
 % figure; hold on; axis equal;
 % structure_plot(grt_P, nan(3,1), 'cam_color', 'k', 'cam_fill', 'g');
-% structure_plot(cepnp_P, X_cepnp, 'cam_color', 'r');
+% structure_plot(ceppnp_P, X_ceppnp, 'cam_color', 'r');
 % view(-180, -80);
 % title('CEPnP');
 % saveas(gcf, ['real_expriment_sfm_',dataset,'_CEPnP.eps'],'epsc')
@@ -260,6 +260,21 @@ for i = 1:length(images)-1
 end
     
 end
+%%
+function [data, K] = read_data_ycb()
+% http://www.ycbbenchmarks.com/
+% http://ycb-benchmarks.s3-website-us-east-1.amazonaws.com/
+K = hdf5read('/media/amin/data/Amin/academic/phd_ai/project/Documents/papers/new/EKFPnP_matlab_toolbox/data/035_power_drill_berkeley_rgb_highres/035_power_drill/calibration.h5','/N1_rgb_K')';
+data_dir = 'data/035_power_drill_berkeley_rgb_highres/035_power_drill/*.jpg';
+pose_dir = 'data/035_power_drill_berkeley_rgb_highres/035_power_drill/poses/*.h5';
+
+
+images = dir(data_dir);
+images = arrayfun(@(f)[f.folder,'/', f.name], images, 'UniformOutput', false);
+poses = dir(pose_dir);
+poses = arrayfun(@(f)[f.folder,'/', f.name], poses, 'UniformOutput', false);
+
+end
 
 %%
 function [data, K] = read_data_middlebury(DATASET)
@@ -316,7 +331,7 @@ figure; structure_plot(Ps, nan(3,1));
 %}
 end
 %%
-function [ekf_err, cepnp_err, mlpnp_err]=getErrors(grt_x, ekf_x, cepnp_x, mlpnp_x)
+function [ekf_err, ceppnp_err, mlpnp_err]=getErrors(grt_x, ekf_x, ceppnp_x, mlpnp_x)
 %{
 a=sqrt(sum((ekf_x(1:3,:)-grt_x(1:3,:)).^2))
 b=sqrt(sum((pnp_x(1:3,:)-grt_x(1:3,:)).^2))
@@ -326,7 +341,7 @@ figure; plot(a); hold on; plot(b);
 for i=1:size(grt_x,2)
     %--- transition errors
     mt_ekf(i) = norm(ekf_x(1:3,i)-grt_x(1:3,i))./norm(grt_x(1:3,i))*100;
-    mt_cepnp(i) = norm(cepnp_x(1:3,i)-grt_x(1:3,i))./norm(grt_x(1:3,i))*100;
+    mt_ceppnp(i) = norm(ceppnp_x(1:3,i)-grt_x(1:3,i))./norm(grt_x(1:3,i))*100;
     mt_mlpnp(i) = norm(mlpnp_x(1:3,i)-grt_x(1:3,i))./norm(grt_x(1:3,i))*100;
     
     %--- rotatin error
@@ -334,9 +349,9 @@ for i=1:size(grt_x,2)
     [ekf_dq_yaw, ekf_dq_pitch, ekf_dq_roll] = quat2angle(ekf_dq);
     mr_ekf(i) = rad2deg(norm([ekf_dq_yaw, ekf_dq_pitch, ekf_dq_roll]));
     
-    cepnp_dq = quatmultiply(quatinv(grt_x(4:7,i)'), cepnp_x(4:7,i)');
-    [cepnp_dq_yaw, cepnp_dq_pitch, cepnp_dq_roll] = quat2angle(cepnp_dq);
-    mr_cepnp(i) = rad2deg(norm([cepnp_dq_yaw, cepnp_dq_pitch, cepnp_dq_roll]));
+    ceppnp_dq = quatmultiply(quatinv(grt_x(4:7,i)'), ceppnp_x(4:7,i)');
+    [ceppnp_dq_yaw, ceppnp_dq_pitch, ceppnp_dq_roll] = quat2angle(ceppnp_dq);
+    mr_ceppnp(i) = rad2deg(norm([ceppnp_dq_yaw, ceppnp_dq_pitch, ceppnp_dq_roll]));
 
     mlpnp_dq = quatmultiply(quatinv(grt_x(4:7,i)'), mlpnp_x(4:7,i)');
     [mlpnp_dq_yaw, mlpnp_dq_pitch, mlpnp_dq_roll] = quat2angle(mlpnp_dq);
@@ -344,17 +359,17 @@ for i=1:size(grt_x,2)
 
 end
 ekf_err=[mt_ekf; mr_ekf];
-cepnp_err=[mt_cepnp; mr_cepnp];
+ceppnp_err=[mt_ceppnp; mr_ceppnp];
 mlpnp_err=[mt_mlpnp; mr_mlpnp];
 end
 %%
-function plotErros(ekf_err, cepnp_err, mlpnp_err)
+function plotErros(ekf_err, ceppnp_err, mlpnp_err)
 figure;
 subplot(2,1,1);
 hold on;
 grid on;
 plot(ekf_err(1,:), '-r', 'linewidth', 1);
-plot(cepnp_err(1,:), '-b', 'linewidth', 1);
+plot(ceppnp_err(1,:), '-b', 'linewidth', 1);
 plot(mlpnp_err(1,:), '-k', 'linewidth', 1);
 title('Mean Translation Error');
 xlabel('n');
@@ -367,7 +382,7 @@ subplot(2,1,2);
 hold on;
 grid on;
 plot(ekf_err(2,:), '-r', 'linewidth', 1);
-plot(cepnp_err(2,:), '-b', 'linewidth', 1);
+plot(ceppnp_err(2,:), '-b', 'linewidth', 1);
 plot(mlpnp_err(2,:), '-k', 'linewidth', 1);
 title('Mean Rotation Error');
 xlabel('n');

@@ -23,12 +23,16 @@ function main_box
 clear; clc;
 IniToolbox;
 
-id = 'b3';
-video = VideoReader(['data/', id ,'.mp4']);
+video_path = 'data/b3.mp4';
+video = VideoReader(video_path);
+if isnan(video.Height) || video.Height == 0
+   fprintf(['Cannot read video file ', video_path, '\n']);
+   return
+end
 % vo = VideoWriter('box_results.avi');
 % open(vo);
 
-load(['data/',id,'.mat']);
+load('data/b3.mat');
 pts_2d = pts_2d(:,1:20:end);
 pts_3d = pts_3d(:,1:20:end);
 
@@ -78,11 +82,11 @@ while hasFrame(video)
         Evv(:,:,id) = J*cov_proj*J';
         cov(:,id) = reshape(Evv(:,:,id),9,1);
     end
-    %--- CEPNP
+    %--- CEPPNP
     %Cu = repmat(3^2 *eye(2),[1,1,size(X,2)]);
     mX = X - repmat(mean(X,2),1,size(X,2));
-    [R_cepnp,t_cepnp]=CEPPnP(mX, x_i, Cu);
-    t_cepnp = t_cepnp - R_cepnp * mean(X,2);
+    [R_ceppnp,t_ceppnp]=CEPPnP(mX, x_i, Cu);
+    t_ceppnp = t_ceppnp - R_ceppnp * mean(X,2);
     
     %--- MLPnP
     v = normc([x_i; ones(1,size(x_i,2))]);
@@ -94,7 +98,7 @@ while hasFrame(video)
         [R_epnp,t_epnp] = EPnP_GN(X, x_i);
         P1 = [R1, t1];
         P2 = [R_epnp,t_epnp];
-        ekf_obj = ekfp(p2state(P1), p2state(P2), [K(1,1) K(1:2,3)']);
+        ekf_obj = ekfpnp(p2state(P1), p2state(P2), [K(1,1) K(1:2,3)']);
         ekf_initialized = true;
         R_ekf=R_epnp; t_ekf=t_epnp;
     else
@@ -121,8 +125,8 @@ while hasFrame(video)
     %}
     
     subplot(1,9,[1:3])
-    plot_box(K, R_cepnp, t_cepnp, x, edges, imgi, i);
-    title('CEPnP');
+    plot_box(K, R_ceppnp, t_ceppnp, x, edges, imgi, i);
+    title('CEPPnP');
 
     subplot(1,9,[4:6])
     plot_box(K, R_mlpnp, t_mlpnp, x, edges, imgi, i);
@@ -140,6 +144,7 @@ while hasFrame(video)
 %     set(gcf, 'outerposition',[400  200  500  360])
 %     drawnow;
     if ismember(i,[1, 400, 450, 500, 550])
+        getframe(gcf);
         saveas(gcf, sprintf('real_experiment_%d', i) ,'epsc')
     end
 end

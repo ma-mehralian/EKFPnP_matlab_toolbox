@@ -120,7 +120,7 @@ for i= 1:length(npts)
                     if j<=2
                         [R1,t1] = EPnP_planar(XXw(:,:,j), xxn(:,:,j)/f);
                         INT_P(:,:,j)= pInv([R1,t1]);
-                        if j==2 , ekf_obj = ekfp(pose2state(INT_P(:,:,1)), pose2state(INT_P(:,:,2)), [f 0 0]); end
+                        if j==2 , ekf_obj = ekfpnp(pose2state(INT_P(:,:,1)), pose2state(INT_P(:,:,2)), [f 0 0]); end
                     elseif j>2
                         z= reshape(xxn(:,:,j),[],1);
                         ekf_obj = ekf_obj.step_simple(XXw(:,:,j), z, RC);

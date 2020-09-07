@@ -139,7 +139,7 @@ for i= 1:length(npts)
                         if h<=2
                             [R1,t1] = EPnP_GN(XXw, xxn/f);
                             INT_P(:,:,h)= pInv([R1,t1]);
-                            if h==2 , ekf_obj = ekfp(pose2state(INT_P(:,:,1)), pose2state(INT_P(:,:,2)), [f 0 0]); end
+                            if h==2 , ekf_obj = ekfpnp(pose2state(INT_P(:,:,1)), pose2state(INT_P(:,:,2)), [f 0 0]); end
                         elseif h>2
                             z= reshape(xxn,[],1);
                             ekf_obj = ekf_obj.step_simple(XXw, z, RC);
