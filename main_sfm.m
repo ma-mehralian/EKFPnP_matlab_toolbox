@@ -181,8 +181,8 @@ saveas(gcf, ['real_expriment_sfm_',dataset,'_EKFPnP.eps'],'epsc')
 % structure_plot(grt_P, nan(3,1), 'cam_color', 'k', 'cam_fill', 'g');
 % structure_plot(ceppnp_P, X_ceppnp, 'cam_color', 'r');
 % view(-180, -80);
-% title('CEPnP');
-% saveas(gcf, ['real_expriment_sfm_',dataset,'_CEPnP.eps'],'epsc')
+% title('CEPPnP');
+% saveas(gcf, ['real_expriment_sfm_',dataset,'_CEPPnP.eps'],'epsc')
 
 figure; hold on; axis equal;
 structure_plot(grt_P, nan(3,1), 'cam_color', 'k', 'cam_fill', 'g');
@@ -214,7 +214,7 @@ for i=1:length(images)
     %{
     figure; imshow(img);
     hold on;
-    plot(data{i}.f(1,:), data{i}.f(2,:),'.');
+    scatter(data{i}.f(1,:), data{i}.f(2,:),100,'.r');
     %}
 end
     
@@ -264,7 +264,7 @@ end
 function [data, K] = read_data_ycb()
 % http://www.ycbbenchmarks.com/
 % http://ycb-benchmarks.s3-website-us-east-1.amazonaws.com/
-K = hdf5read('/media/amin/data/Amin/academic/phd_ai/project/Documents/papers/new/EKFPnP_matlab_toolbox/data/035_power_drill_berkeley_rgb_highres/035_power_drill/calibration.h5','/N1_rgb_K')';
+K = hdf5read('data/035_power_drill_berkeley_rgb_highres/035_power_drill/calibration.h5','/N1_rgb_K')';
 data_dir = 'data/035_power_drill_berkeley_rgb_highres/035_power_drill/*.jpg';
 pose_dir = 'data/035_power_drill_berkeley_rgb_highres/035_power_drill/poses/*.h5';
 
@@ -276,6 +276,50 @@ poses = arrayfun(@(f)[f.folder,'/', f.name], poses, 'UniformOutput', false);
 
 end
 
+%%
+function [data, K] = read_data_epfl(DATASET)
+% dataset from https://icwww.epfl.ch/multiview/denseMVS.html
+
+SCALE = 0.25;
+KNN_RATION = 0.7;
+PEAK_THRESH = 0.001;
+LEVELS = 5;
+
+K = [ SCALE*2759.48 0 SCALE*1520.69 
+0 SCALE*2764.16 SCALE*1006.81 
+0 0 1 ];
+% if exist(['data_',DATASET,'_',num2str(SCALE),'_',num2str(KNN_RATION),'.mat'])
+%     load(['data_',DATASET,'_',num2str(SCALE),'_',num2str(KNN_RATION),'.mat']);
+% else
+    images = dir(['data/', DATASET, '/*.png']);
+    images = arrayfun(@(f)[f.folder,'/', f.name], images, 'UniformOutput', false);
+    cams = dir(['data/', DATASET, '/*.camera']);
+    cams = arrayfun(@(f)[f.folder,'/', f.name], cams, 'UniformOutput', false);
+
+    data = match_features(images, SCALE, KNN_RATION);
+    tmp = what(['data/', DATASET, '/']);
+    for i=1:length(images)
+        data{i}.img_name = strrep(images{i}, [tmp.path,'/'],''); 
+        %--- homogen features
+        f = [data{i}.f(1:2,:); ones(1,size(data{i}.f,2))];
+        %f = inv(K) * f;
+        %f = f ./ f(3,:);
+        data{i}.f = f;
+        
+        %--- cam pose
+        cam = importdata(cams{i});
+        data{i}.pose = [cam(5:7, :) cam(8, :)'];
+        data{i}.proj = pInv(data{i}.pose);
+    end
+    %save(['data_',DATASET,'_',num2str(SCALE),'_',num2str(KNN_RATION),'.mat'], 'data');
+% end
+
+%{
+Ps = cellfun(@(x) x.proj, data, 'UniformOutput', false);
+Ps = cat(3, Ps{:});
+figure; structure_plot(Ps, [0,0,0]');
+%}
+end
 %%
 function [data, K] = read_data_middlebury(DATASET)
 % dataset from http://vision.middlebury.edu/mview/data/
