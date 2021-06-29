@@ -116,7 +116,7 @@ for i= 1:length(npts)
                      strcmp(method_list(k).name, 'MLPnPWithCov') 
                     [R1,t1]= method_list(k).f(XXw,v,cov);
                 elseif strcmp(method_list(k).name, 'EKFPnP')
-                    %--- initialize the first two view with EPnP_GN
+                    %--- initialize the first two view with EPnP_planar
                     if j<=2
                         [R1,t1] = EPnP_planar(XXw(:,:,j), xxn(:,:,j)/f);
                         INT_P(:,:,j)= pInv([R1,t1]);

@@ -126,7 +126,7 @@ for i= 1:length(nls)
                         tcost = toc;
                     elseif strcmp(method_list(k).name, 'EKFPnP')
                         tic;
-                        %--- initialize the first two view with EPnP_GN
+                        %--- initialize the first two view with EPnP_planar
                         if h<=2
                             [R1,t1] = EPnP_planar(XXw, xxn/f);
                             INT_P(:,:,h)= pInv([R1,t1]);
