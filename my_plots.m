@@ -145,12 +145,25 @@ end
 function odinary_3d_results_time()
 load ordinary3DresultsTime
 figure('outerposition',[0    260    950    450])
-yrange= [0 1100];
+yrange= [0 300];
 
 grid on
 xdrawgraph(npts,yrange,method_list,'mean_c','Mean Cost',...
     'Number of Points','Cost (ms)');
 hLegend = findobj(gcf, 'Type', 'Legend');
 set(hLegend,'Location','northwest');
-saveas(gcf, 'sim_experiment_ordinary_time' ,'epsc')
+saveas(gcf, 'sim_experiment_ordinary_time_1' ,'epsc')
+
+%---- zoom 
+
+load ordinary3DresultsTime
+figure('outerposition',[0    260    950    450])
+yrange= [0 70];
+
+grid on
+xdrawgraph(npts,yrange,method_list,'mean_c','Mean Cost',...
+    'Number of Points','Cost (ms)');
+hLegend = findobj(gcf, 'Type', 'Legend');
+set(hLegend,'Location','northwest');
+saveas(gcf, 'sim_experiment_ordinary_time_2' ,'epsc')
 end

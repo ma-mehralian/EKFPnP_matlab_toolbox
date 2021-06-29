@@ -2,7 +2,7 @@ classdef ekfpnp
     %EKFPnP Extended Kaman Filter for camera pose estimation
     % 
     % .====================== NOTE ======================.
-    % |       Large part of this code is based on        |
+    % |       Some part of this code is based on         |
     % | Javier Civera and J. M. M. Montiel great work on |
     % |        1-Point RANSAC for EKF Filtering          |
     % '=================================================='
@@ -75,7 +75,17 @@ classdef ekfpnp
                 R = eye(length(z));
             end
             [ obj.s_k_km1, obj.p_k_km1 ] = ekf_predict( obj.s_k_k, obj.p_k_k, [obj.std_a, obj.std_alpha]);
-            [ obj.s_k_k, obj.p_k_k, K ] = ekf_update_simple( obj.s_k_km1, obj.p_k_km1, z, X, obj.dist, R);
+            [ obj.s_k_k, obj.p_k_k, K ] = ekf_update_simple_fast( obj.s_k_km1, obj.p_k_km1, z, X, obj.dist, R);
+        end
+        %%
+        function obj = step_simple_old_slow(obj, X, z, varargin)
+            if nargin>3
+                R = varargin{1};
+            else
+                R = eye(length(z));
+            end
+            [ obj.s_k_km1, obj.p_k_km1 ] = ekf_predict( obj.s_k_k, obj.p_k_k, [obj.std_a, obj.std_alpha]);
+            [ obj.s_k_k, obj.p_k_k, K ] = ekf_update_simple_old_slow( obj.s_k_km1, obj.p_k_km1, z, X, obj.dist, R);
         end
         %%
         function [R, t] = getProj(obj)
@@ -260,7 +270,32 @@ s_k_k( 4:7 ) = s_k_k( 4:7 ) / norm( s_k_k( 4:7 ) );
 
 end
 %%
-function [ s_k_k, p_k_k, K ] = ekf_update_simple( s_km1_k, p_km1_k, z, X, dist, R)
+function [ s_k_k, p_k_k, K ] = ekf_update_simple_fast( s_km1_k, p_km1_k, z, X, dist, R)
+[h, X_C]=f_h(s_km1_k, X, dist);
+H = dfh_by_ds(s_km1_k, X, X_C, dist);
+
+% --- filter gain
+inv_R_D = diag(R).^-1;
+%B = (p_km1_k * H')* diag(inv_R_D);
+B = bsxfun(@times,(p_km1_k * H'), inv_R_D');
+C = B*H;
+K = B - C *inv(eye(13) + C )*B;
+
+% --- updated state and covariance
+s_k_k = s_km1_k + K*( z - h );
+p_k_k = (eye(13) - K*H)*p_km1_k;
+
+% --- normalize the quaternion
+Jn = normJac( s_k_k( 4:7 ) );
+p_k_k = [...
+    p_k_k(1:3,1:3)      zeros(3,4)       p_k_k(1:3,8:10)         zeros(3);
+    zeros(4,3)   Jn*p_k_k(4:7,4:7)*Jn'     zeros(4,3)       Jn*p_k_k(4:7,11:13);
+    p_k_k(8:10,1:3)           zeros(3,4)        p_k_k(8:10,8:10)        zeros(3);
+    zeros(3)      p_k_k(11:13,4:7)*Jn'           zeros(3)         p_k_k(11:13,11:13)];
+s_k_k( 4:7 ) = s_k_k( 4:7 ) / norm( s_k_k( 4:7 ) );
+end
+%%
+function [ s_k_k, p_k_k, K ] = ekf_update_simple_old_slow( s_km1_k, p_km1_k, z, X, dist, R)
 [h, X_C]=f_h(s_km1_k, X, dist);
 H = dfh_by_ds(s_km1_k, X, X_C, dist);
 

@@ -32,10 +32,10 @@ num = 100;
 A= zeros(size(npts));
 B= zeros(num,1);
 
-name = {'EKFPnP', 'PPnP','MLPnP','EPnP+GN', 'RPnP', 'ASPnP', 'OPnP', 'DLS', 'CEPPnP', 'SRPnP'};
-f = {[], @PPnP, @MLPNP_with_COV, @EPnP_GN,  @RPnP, @ASPnP, @OPnP, @robust_dls_pnp, @CEPPnP, @SRPnP};
-marker = { 'x', '<', 'd', '*', 's', 'v', 'o', '+', '>', '^'};
-color = { [.8,0,0], [0,.8,0], [0,0,.8], [.6,.4,.2], [.8,0,.8], [0,0,0], [.2,.5,.8], [1,.5,0], [0.8,.5,0.1], [0.1,.5,0.1]};
+name = {'slow-EKFPnP', 'EKFPnP', 'PPnP','MLPnP','EPnP+GN', 'RPnP', 'ASPnP', 'OPnP', 'DLS', 'CEPPnP', 'SRPnP'};
+f = {[], [], @PPnP, @MLPNP_with_COV, @EPnP_GN,  @RPnP, @ASPnP, @OPnP, @robust_dls_pnp, @CEPPnP, @SRPnP};
+marker = { 'o', 'x', '<', 'd', '*', 's', 'v', 'o', '+', '>', '^'};
+color = {[.5,0.3,0], [.8,0,0], [0,.8,0], [0,0,.8], [.6,.4,.2], [.8,0,.8], [0,0,0], [.2,.5,.8], [1,.5,0], [0.8,.5,0.1], [0.1,.5,0.1]};
 markerfacecolor = color;
 
 % 
@@ -128,13 +128,24 @@ for i= 1:length(npts)
                 elseif strcmp(method_list(k).name, 'EKFPnP')
                     %--- initialize the first two view with EPnP_GN
                     if j<=2
-                        [R1,t1] = EPnP_planar(XXw(:,:,j), xxn(:,:,j)/f);
+                        [R1,t1] = EPnP_GN(XXw(:,:,j), xxn(:,:,j)/f);
                         INT_P(:,:,j)= pInv([R1,t1]);
                         if j==2 , ekf_obj = ekfpnp(pose2state(INT_P(:,:,1)), pose2state(INT_P(:,:,2)), [f 0 0]); end
                     elseif j>2
                         z= reshape(xxn(:,:,j),[],1);
                         ekf_obj = ekf_obj.step_simple(XXw(:,:,j), z, RC);
                         [R1, t1] = ekf_obj.getProj();
+                    end
+                elseif strcmp(method_list(k).name, 'slow-EKFPnP')
+                    %--- initialize the first two view with EPnP_GN
+                    if j<=2
+                        [R1,t1] = EPnP_GN(XXw(:,:,j), xxn(:,:,j)/f);
+                        slow_INT_P(:,:,j)= pInv([R1,t1]);
+                        if j==2 , slow_ekf_obj = ekfpnp(pose2state(slow_INT_P(:,:,1)), pose2state(slow_INT_P(:,:,2)), [f 0 0]); end
+                    elseif j>2
+                        z= reshape(xxn(:,:,j),[],1);
+                        slow_ekf_obj = slow_ekf_obj.step_simple_old_slow(XXw(:,:,j), z, RC);
+                        [R1, t1] = slow_ekf_obj.getProj();
                     end
                 else
                     [R1,t1]= method_list(k).f(XXw(:,:,j),xxn(:,:,j)/f);

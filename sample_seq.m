@@ -36,7 +36,7 @@ for i=1:n
     Ps_q(:,i)=[center; q'];
 end
 % npt = 300;
-% plot_cam_pose(Ps, [xrand(1,npt,[-2 2]); xrand(1,npt,[-2 2]); xrand(1,npt,[4 8])], 'cam_scale', 0.3);
+% structure_plot(Ps, [xrand(1,npt,[-2 2]); xrand(1,npt,[-2 2]); xrand(1,npt,[4 8])], 'cam_scale', 50);
 end
 %%
 function opts=pars_options(varargin)
