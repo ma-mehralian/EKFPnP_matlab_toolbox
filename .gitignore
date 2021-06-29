@@ -1,3 +1,6 @@
 *.eps
 /*.mat
 /vlfeat
+results_opt-EKFPnP
+/data/035_power_drill_berkeley_rgb_highres*
+data/fountain_dense
