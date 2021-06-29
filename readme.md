@@ -6,6 +6,13 @@ tend to be more accurate and more robust compared to when the observations are c
 To combine the camera pose history and the uncertainty of image point measurements, the Extended
 Kalman Filter (EKF) is employed.
 
+Mehralian, Mohammad Amin; Soryani, Mohsen: 'EKFPnP: extended Kalman filter for camera pose estimation in a sequence of images', IET Image Processing, 2020, 14, (15), p. 3774-3780, DOI: 10.1049/iet-ipr.2020.0606
+
+IET Digital Library: [https://digital-library.theiet.org/content/journals/10.1049/iet-ipr.2020.0606]
+
+PDF: [https://ietresearch.onlinelibrary.wiley.com/doi/epdf/10.1049/iet-ipr.2020.0606]
+
+
 ## PnP Toolbox
 
 This toolbox is an extension of the toolbox provided by the authors of
